@@ -2,7 +2,7 @@
 using Microsoft.Data.SqlClient;
 using Microsoft.Extensions.Configuration;
 
-namespace AAS_Deliveroo_v2.Infrastructure.Database;
+namespace AAS_BSL.Infrastructure.Database;
 
 public class CentegraProcessingDbContext
 {

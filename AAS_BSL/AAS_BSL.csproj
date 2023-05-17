@@ -8,6 +8,13 @@
 
     <ItemGroup>
       <ProjectReference Include="..\AAS_BSL.Domain\AAS_BSL.Domain.csproj" />
+      <ProjectReference Include="..\AAS_BSL.Infrastructure\AAS_BSL.Infrastructure.csproj" />
+      <ProjectReference Include="..\AAS_BSL.Services\AAS_BSL.Services.csproj" />
+    </ItemGroup>
+
+    <ItemGroup>
+      <PackageReference Include="Microsoft.Extensions.Logging.AzureAppServices" Version="7.0.5" />
+      <PackageReference Include="Swashbuckle.AspNetCore" Version="6.5.0" />
     </ItemGroup>
 
 </Project>

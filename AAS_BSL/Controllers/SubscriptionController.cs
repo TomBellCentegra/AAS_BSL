@@ -1,4 +1,5 @@
 using AAS_BSL.Domain.Dtos;
+using AAS_BSL.Services.Subsription;
 using Microsoft.AspNetCore.Mvc;
 
 namespace AAS_BSL.Controllers;
@@ -7,13 +8,21 @@ namespace AAS_BSL.Controllers;
 [Produces("application/json")]
 public class SubscriptionController : ControllerBase
 {
+    private readonly ISubscriptionService _subscriptionService;
+
+    public SubscriptionController(ISubscriptionService subscriptionService)
+    {
+        _subscriptionService = subscriptionService;
+    }
+
     [HttpPost]
     [Route("bsl/subscribe")]
-    public async Task<IActionResult> Subscribe([FromBody] SubscriptionRequest orderRequest)
+    public async Task<IActionResult> Subscribe([FromBody] SubscriptionRequest companyRequest)
     {
         try
         {
-            return Ok();
+            var result = await _subscriptionService.Process(companyRequest);
+            return Ok(result);
         }
         catch (Exception ex)
         {
