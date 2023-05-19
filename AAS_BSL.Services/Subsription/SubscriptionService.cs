@@ -16,7 +16,7 @@ public class SubscriptionService: ISubscriptionService
         _httpClient = httpClient;
     }
 
-    public async Task<StatusResult> Process(SubscriptionRequest request)
+    public async Task<StatusResult> Process(SubscriptionRequestDto request)
     {
         if (request is null)
         {
@@ -27,18 +27,20 @@ public class SubscriptionService: ISubscriptionService
         {
             var company = await _companyService.CreateOrGet(request);
 
-            if (!company.IsSubscribed)
-            {
-                var result = await _httpClient.Subscribe(request);
+            if (company.IsSubscribed)
+                return new StatusResult
+                    { Status = Status.Done, Message = $"Company with id: {company.CompanyId} already subscribed" };
+            
+            var result = await _httpClient.Subscribe(request);
 
-                if (result.Status == Status.Done)
-                {
-                    await _companyService.SetSubscribed(company.CompanyId);
-                }
-            }
+            if (result.Status != Status.Done)
+                return new StatusResult { Status = Status.Failed, Message = result.Message };
 
+            await _companyService.SetSubscribed(company.CompanyId);
+            
             return new StatusResult
                 { Status = Status.Done, Message = $"Company with id: {company.CompanyId} has been subscribed" };
+            
         }
         catch (Exception e)
         {

@@ -4,6 +4,6 @@ namespace AAS_BSL.Services.HttpClient;
 
 public interface IBslHttpClient
 {
-    Task<StatusResult> Subscribe(SubscriptionRequest request);
+    Task<StatusResult> Subscribe(SubscriptionRequestDto request);
 
 }

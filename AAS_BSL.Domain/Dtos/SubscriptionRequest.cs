@@ -1,6 +1,6 @@
 namespace AAS_BSL.Domain.Dtos;
 
-public class SubscriptionRequest
+public class SubscriptionRequestDto
 {
     public string CompanyName { get; set; }
     public string NepOrganization { get; set; }

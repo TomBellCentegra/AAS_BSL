@@ -17,7 +17,7 @@ public class SubscriptionController : ControllerBase
 
     [HttpPost]
     [Route("bsl/subscribe")]
-    public async Task<IActionResult> Subscribe([FromBody] SubscriptionRequest companyRequest)
+    public async Task<IActionResult> Subscribe([FromBody] SubscriptionRequestDto companyRequest)
     {
         try
         {

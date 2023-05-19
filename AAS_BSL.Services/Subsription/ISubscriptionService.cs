@@ -4,5 +4,5 @@ namespace AAS_BSL.Services.Subsription;
 
 public interface ISubscriptionService
 {
-    Task<StatusResult> Process(SubscriptionRequest request);
+    Task<StatusResult> Process(SubscriptionRequestDto request);
 }

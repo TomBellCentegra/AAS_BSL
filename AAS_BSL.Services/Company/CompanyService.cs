@@ -17,7 +17,7 @@ public class CompanyService : ICompanyService
         _dbContext = dbContext;
         _secretService = secretService;
     }
-    public async Task<Domain.Company.Company> CreateOrGet(SubscriptionRequest request)
+    public async Task<Domain.Company.Company> CreateOrGet(SubscriptionRequestDto request)
     {
         var getQuery = "SELECT * FROM [BSL_Company] WHERE Name = @Name AND OrganizationId = @OrganizationId";
         using var connection = _dbContext.CreateConnection();
