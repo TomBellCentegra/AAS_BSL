@@ -32,22 +32,23 @@ public class BslHttpClient : IBslHttpClient
 
         var subscription = new SubscriptionRequest()
         {
-            authenticationCredentials = new AuthenticationCredential()
-            {
-                authenticationType = "BASIC",
-                credentials = "token"
-            },
+            //authenticationCredentials = new AuthenticationCredential()
+            //{
+            //    authenticationType = "BASIC",
+            //    credentials = "token"
+            //},
             name = request.CompanyName,
             description = $"Subscription for {request.CompanyName}",
-            endpoint = new Endpoint()
+            endpoint = new Endpoint
             {
                 name = "Centegra BSL",
                 description = "Centegra BSL integration",
                 destinationUrl = "https://localhost:8080/order"
             },
-            
-            
-            
+            topicId = new TdmTopicIdData
+            {
+                name = "tlog_ext_received"
+            }
         };
 
         var subscriptionJson = JsonConvert.SerializeObject(subscription);
