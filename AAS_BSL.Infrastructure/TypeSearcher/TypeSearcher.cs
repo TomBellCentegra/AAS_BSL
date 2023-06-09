@@ -5,7 +5,6 @@ namespace AAS_BSL.Infrastructure.TypeSearcher;
 
 public class TypeSearcher : ITypeSearcher
 {
-
     public IEnumerable<Type> ClassesOfType<T>(bool onlyConcreteClasses = true)
     {
         return ClassesOfType(typeof(T), onlyConcreteClasses);
@@ -66,7 +65,7 @@ public class TypeSearcher : ITypeSearcher
 
         return result;
     }
-    
+
     protected virtual bool DoesTypeImplementOpenGeneric(Type type, Type openGeneric)
     {
         try
@@ -106,7 +105,7 @@ public class TypeSearcher : ITypeSearcher
             var product = assembly.GetCustomAttribute<AssemblyProductAttribute>();
             var referencedAssemblies = assembly.GetReferencedAssemblies().ToList();
             if (referencedAssemblies.Where(x => x.FullName == currentAssem.FullName).Any()
-                || product?.Product == "aas_deliveroo_v2")
+                || product?.Product == "aas_bsl")
             {
                 if (!addedAssemblyNames.Contains(assembly.FullName))
                 {
@@ -118,7 +117,7 @@ public class TypeSearcher : ITypeSearcher
 
         return assemblies;
     }
-    
+
     protected virtual void LoadMatchingAssemblies()
     {
         var loadedAssemblyNames = new List<string>();
