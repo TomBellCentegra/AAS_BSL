@@ -7,7 +7,6 @@ using AAS_BSL.Services.Item;
 using AAS_BSL.Services.Payment;
 using AAS_BSL.Services.Transaction;
 using AAS_BSL.Services.TransactionPayload;
-using AutoMapper;
 using Newtonsoft.Json;
 
 namespace AAS_BSL.Services.Order;
@@ -169,9 +168,13 @@ public class OrderService : IOrderService
 
     private async Task ProcessUpdateTransaction(Transactions transaction, Canonical canonical)
     {
+        await _transactionService.SetBatched(transaction.TDMTransactionID, 0);
+        
         await ProcessUpdateItems(transaction.Items, GetCanonicalItems(canonical));
 
         await ProcessUpdatePayment(canonical.tlog.tenders, canonical.tlog.totals, canonical.id);
+        
+        await _transactionService.SetBatched(transaction.TDMTransactionID, 1);
     }
 
     private IEnumerable<Domain.Entyties.Item.Item> GetCanonicalItems(Canonical canonical)
