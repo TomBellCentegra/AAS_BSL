@@ -5,6 +5,7 @@ using AAS_BSL.Infrastructure.Database;
 using AAS_BSL.Infrastructure.Mapper;
 using AAS_BSL.Services.HttpClient;
 using AAS_BSL.Services.Item;
+using AAS_BSL.Services.Logger;
 using AAS_BSL.Services.Order;
 using AAS_BSL.Services.Payment;
 using AAS_BSL.Services.Profiles;
@@ -53,6 +54,7 @@ public static class StartupExtensions
         services.AddScoped<IPaymentRepository, PaymentRepository>();
         services.AddScoped<IItemRepository, ItemRepository>();
         services.AddScoped<ITransactionPayloadService, TransactionPayloadService>();
+        services.AddScoped<ILoggerService, LoggerService>();
 
         services.AddHttpClient<IBslHttpClient, BslHttpClient>();
 

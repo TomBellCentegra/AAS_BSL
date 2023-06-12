@@ -28,7 +28,8 @@ public class BslHttpClient : IBslHttpClient
         httpRequestMessage.Headers.Authorization = new AuthenticationHeaderValue("AccessKey", signature);
         httpRequestMessage.Headers.Add("nep-organization", request.NepOrganization);
         httpRequestMessage.Headers.Host = "api.ncr.com";
-
+            //AccessKey 2b3f21f652584c12af034e2ec0227a07:WUuqYJ3iiARG1Tb0E3CY0n2fobpZ7pTle13y37j7D+3FUiJq+w+bsyhmzpBIWRNHFO9/ZZLcTVtTmJfNRyKeTQ==
+            //          2b3f21f652584c12af034e2ec0227a07:PGxQeZlOXRj5T332/A4NzVyL0+8mWzI4NznsfJbx1QmG9uez7Oey9xjyiMtskN5lLqc/SFdxR/p9W3K5nXwXpA==
 
         var subscription = new SubscriptionRequest()
         {
@@ -41,9 +42,9 @@ public class BslHttpClient : IBslHttpClient
             description = $"Subscription for {request.CompanyName}",
             endpoint = new Endpoint
             {
-                name = "Centegra BSL",
+                name = "CentegraBSL",
                 description = "Centegra BSL integration",
-                destinationUrl = "https://localhost:8080/order"
+                destinationUrl = "https://aasbsl-dev.azurewebsites.net/bsl/subscribe"
             },
             topicId = new TdmTopicIdData
             {
