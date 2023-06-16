@@ -94,6 +94,6 @@ public class TransactionService : ITransactionService
                 transaction.Items.Add(item);
                 return transaction;
             }, splitOn: "ItemID", param: new { externalId });
-        return transactionMap.Values.First();
+        return transactionMap.Values.FirstOrDefault();
     }
 }

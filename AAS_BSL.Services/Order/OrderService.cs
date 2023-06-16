@@ -2,8 +2,10 @@ using AAS_BSL.Domain.Canonical;
 using AAS_BSL.Domain.Canonical.Transaction;
 using AAS_BSL.Domain.Dtos.Transaction;
 using AAS_BSL.Domain.Entyties.Transaction;
+using AAS_BSL.Domain.Logger;
 using AAS_BSL.Infrastructure.Mapper;
 using AAS_BSL.Services.Item;
+using AAS_BSL.Services.Logger;
 using AAS_BSL.Services.Payment;
 using AAS_BSL.Services.Transaction;
 using AAS_BSL.Services.TransactionPayload;
@@ -17,23 +19,28 @@ public class OrderService : IOrderService
     private readonly IItemRepository _itemRepository;
     private readonly IPaymentRepository _paymentRepository;
     private readonly ITransactionPayloadService _transactionPayloadService;
+    private readonly ILoggerService _loggerService;
 
     public OrderService(
         ITransactionService transactionService,
         ITransactionPayloadService transactionPayloadService,
         IPaymentRepository paymentRepository,
-        IItemRepository itemRepository)
+        IItemRepository itemRepository,
+        ILoggerService loggerService)
     {
         _transactionService = transactionService;
         _transactionPayloadService = transactionPayloadService;
         _paymentRepository = paymentRepository;
         _itemRepository = itemRepository;
+        _loggerService = loggerService;
     }
 
     public async Task Process(Canonical canonical)
     {
         try
         {
+            await _loggerService.Save(new Log(canonical.id, "Get transaction process start"));
+
             await _transactionPayloadService.Add(new Domain.Entyties.Transaction.TransactionPayload
                 { TDMTransactionsID = canonical.id, Payload = JsonConvert.SerializeObject(canonical) });
 
@@ -41,22 +48,36 @@ public class OrderService : IOrderService
 
             if (transaction == null)
             {
+                await _loggerService.Save(new Log(canonical.id, $"Transaction with {canonical.id} is new"));
+
                 var transactionId = await _transactionService.Add(CreateTransactionEntity(canonical));
+
+                await _loggerService.Save(new Log(canonical.id, $"Transaction created"));
 
                 await _transactionService.SetBatched(transactionId, 0);
 
-                var setItems = GetCanonicalItems(canonical);
+                await _loggerService.Save(new Log(canonical.id, $"Transaction set batched to 0"));
 
+                await _loggerService.Save(new Log(canonical.id, $"Transaction add items process start"));
+
+                var setItems = GetCanonicalItems(canonical);
                 await _itemRepository.BatchAdd(setItems);
 
-                var payment = createPayment(canonical.tlog.tenders, canonical.tlog.totals);
+                await _loggerService.Save(new Log(canonical.id, $"Transaction add items process end"));
 
+                await _loggerService.Save(new Log(canonical.id, $"Transaction add payment process start"));
+
+                var payment = createPayment(canonical.tlog.tenders, canonical.tlog.totals);
                 payment.TDMTransactionID = transactionId;
 
                 await _paymentRepository.Add(payment);
 
+                await _loggerService.Save(new Log(canonical.id, $"Transaction add payment process end"));
+
                 await _transactionService.SetBatched(transactionId, 1);
 
+                await _loggerService.Save(new Log(canonical.id, $"Transaction processed sucessfully end p"));
+                
                 return;
             }
 
@@ -64,8 +85,7 @@ public class OrderService : IOrderService
         }
         catch (Exception e)
         {
-            Console.WriteLine(e);
-            throw;
+            await _loggerService.Save(new Log(canonical.id, $"Failed with message {e.Message}"));
         }
     }
 
@@ -168,13 +188,25 @@ public class OrderService : IOrderService
 
     private async Task ProcessUpdateTransaction(Transactions transaction, Canonical canonical)
     {
+        await _loggerService.Save(new Log(canonical.id, $"Transaction update processing start"));
+        
         await _transactionService.SetBatched(transaction.TDMTransactionID, 0);
         
+        await _loggerService.Save(new Log(canonical.id, $"Transaction update items process start"));
+
         await ProcessUpdateItems(transaction.Items, GetCanonicalItems(canonical));
+        
+        await _loggerService.Save(new Log(canonical.id, $"Transaction update items process end"));
+        
+        await _loggerService.Save(new Log(canonical.id, $"Transaction update payment process start"));
 
         await ProcessUpdatePayment(canonical.tlog.tenders, canonical.tlog.totals, canonical.id);
         
+        await _loggerService.Save(new Log(canonical.id, $"Transaction update payment process end"));
+
         await _transactionService.SetBatched(transaction.TDMTransactionID, 1);
+        
+        await _loggerService.Save(new Log(canonical.id, $"Transaction update processing end"));
     }
 
     private IEnumerable<Domain.Entyties.Item.Item> GetCanonicalItems(Canonical canonical)
