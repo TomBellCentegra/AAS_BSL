@@ -9,4 +9,5 @@ public class Discount
     public string Name { get; set; }
     public double Amount { get; set; }
     public string Type { get; set; }
+    public string TDMTransactionID { get; set; }
 }

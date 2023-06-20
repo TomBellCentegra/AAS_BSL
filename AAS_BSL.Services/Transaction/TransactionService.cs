@@ -21,11 +21,11 @@ public class TransactionService : ITransactionService
             "INSERT INTO TDM_Transaction (TDMTransactionID,BusinessDay,CloseDate,OpenDate," +
             "IsTraining,SiteInfoId,SiteInfoName,SiteInfoTimeZone,EmployeeName,Employees," +
             "EmployeeShiftId,IsDeleted,IsOpen,IsVoided,LocalCurrency,Location,LocationId," +
-            "ReceiptId,TransactionType) VALUES " +
+            "ReceiptId,TransactionType, TotalDiscount) VALUES " +
             "(@TDMTransactionID,@BusinessDay,@CloseDate,@OpenDate,@IsTraining,@SiteInfoId," +
             "@SiteInfoName,@SiteInfoTimeZone,@EmployeeName,@Employees," +
             "@EmployeeShiftId,@IsDeleted,@IsOpen,@IsVoided,@LocalCurrency," +
-            "@Location,@LocationId,@ReceiptId,@TransactionType)";
+            "@Location,@LocationId,@ReceiptId,@TransactionType, @TotalDiscount)";
 
         var parameters = new DynamicParameters();
         parameters.Add("TDMTransactionID", transaction.TransactionID, DbType.String, ParameterDirection.Input);
@@ -47,6 +47,7 @@ public class TransactionService : ITransactionService
         parameters.Add("LocationId", transaction.LocationId, DbType.String, ParameterDirection.Input);
         parameters.Add("ReceiptId", transaction.ReceiptId, DbType.String, ParameterDirection.Input);
         parameters.Add("TransactionType", transaction.TransactionType, DbType.String, ParameterDirection.Input);
+        parameters.Add("TotalDiscount", transaction.TotalDiscount, DbType.Decimal, ParameterDirection.Input);
 
         using var connection = _dbContext.CreateConnection();
         var resultId = await connection.ExecuteAsync(sql,

@@ -8,6 +8,7 @@ using AAS_BSL.Services.Item;
 using AAS_BSL.Services.Logger;
 using AAS_BSL.Services.Payment;
 using AAS_BSL.Services.Transaction;
+using AAS_BSL.Services.Transaction.Discount;
 using AAS_BSL.Services.TransactionPayload;
 using Newtonsoft.Json;
 
@@ -21,13 +22,16 @@ public class OrderService : IOrderService
     private readonly ITransactionPayloadService _transactionPayloadService;
     private readonly ILoggerService _loggerService;
     private readonly IItemService _itemService;
+    private readonly IDiscountRepository _discountRepository;
 
     public OrderService(
         ITransactionService transactionService,
         ITransactionPayloadService transactionPayloadService,
         IPaymentRepository paymentRepository,
         IItemRepository itemRepository,
-        ILoggerService loggerService, IItemService itemService)
+        ILoggerService loggerService,
+        IItemService itemService,
+        IDiscountRepository discountRepository)
     {
         _transactionService = transactionService;
         _transactionPayloadService = transactionPayloadService;
@@ -35,6 +39,7 @@ public class OrderService : IOrderService
         _itemRepository = itemRepository;
         _loggerService = loggerService;
         _itemService = itemService;
+        _discountRepository = discountRepository;
     }
 
     public async Task Process(Canonical canonical)
@@ -66,6 +71,14 @@ public class OrderService : IOrderService
                 await _itemService.AddList(setItems);
 
                 await _loggerService.Save(new Log(canonical.id, $"Transaction add items process end"));
+
+                var discounts = canonical.tlog.transactionDiscounts.Select(x => x.ToEntity());
+                var resDiscounts = discounts.Select(x =>
+                {
+                    x.TDMTransactionID = canonical.id;
+                    return x;
+                });
+                await _discountRepository.BatchAdd(resDiscounts);
 
                 await _loggerService.Save(new Log(canonical.id, $"Transaction add payment process start"));
 
@@ -112,6 +125,7 @@ public class OrderService : IOrderService
             ReceiptId = canonical.tlog.receiptId,
             TransactionType = canonical.tlog.transactionType,
             CreatedDate = DateTime.Now,
+            TotalDiscount = canonical.tlog.totals.discountAmount?.amount ?? 0
         };
     }
 
