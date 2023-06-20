@@ -26,6 +26,9 @@ public class Transactions
     public string TransactionType { get; set; }
     public DateTime CreatedDate { get; set; }
     public int Batched { get; set; }
-    
+    public bool ToRemove { get; set; }
+    public double TotalDiscount { get; set; }
+
     public virtual IList<Item.Item> Items { get; set; }
+    public virtual IList<Discount.Discount> Discounts { get; set; }
 }

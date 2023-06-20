@@ -15,6 +15,7 @@ public class ItemProfile : Profile, IAutoMapperProfile
             .ForMember(dest => dest.ProductName, opt => opt.MapFrom(u => u.productName))
             .ForMember(dest => dest.ProductPrice, opt => opt.MapFrom(u => u.actualUnitPrice.amount))
             .ForMember(dest => dest.ParentItemId, opt => opt.MapFrom(u => u.parentItemId))
+            .ForMember(dest => dest.Taxes, opt => opt.MapFrom(u => u.itemTaxes))
             .ForMember(dest => dest.UnitPrice, opt => opt.MapFrom(u => u.actualUnitPrice.amount));
     }
 }

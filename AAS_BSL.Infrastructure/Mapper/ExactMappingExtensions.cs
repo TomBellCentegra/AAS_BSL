@@ -1,3 +1,4 @@
+using AAS_BSL.Domain.Entyties.Item.Tax;
 using Item = AAS_BSL.Domain.Entyties.Item.Item;
 
 namespace AAS_BSL.Infrastructure.Mapper;
@@ -17,6 +18,25 @@ public static class ExactMappingExtensions
     }
 
     public static Item ToEntity(this AAS_BSL.Domain.Canonical.Transaction.Item model, Item destination)
+    {
+        return model.MapTo(destination);
+    }
+
+    #endregion
+
+    #region Taxes
+
+    public static Domain.Canonical.Transaction.Tax ToModel(this Tax entity)
+    {
+        return entity.MapTo<Tax, Domain.Canonical.Transaction.Tax>();
+    }
+
+    public static Tax ToEntity(this Domain.Canonical.Transaction.Tax model)
+    {
+        return model.MapTo<Domain.Canonical.Transaction.Tax, Tax>();
+    }
+
+    public static Tax ToEntity(this Domain.Canonical.Transaction.Tax model, Tax destination)
     {
         return model.MapTo(destination);
     }

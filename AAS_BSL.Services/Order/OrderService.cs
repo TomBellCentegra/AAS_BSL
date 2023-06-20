@@ -20,19 +20,21 @@ public class OrderService : IOrderService
     private readonly IPaymentRepository _paymentRepository;
     private readonly ITransactionPayloadService _transactionPayloadService;
     private readonly ILoggerService _loggerService;
+    private readonly IItemService _itemService;
 
     public OrderService(
         ITransactionService transactionService,
         ITransactionPayloadService transactionPayloadService,
         IPaymentRepository paymentRepository,
         IItemRepository itemRepository,
-        ILoggerService loggerService)
+        ILoggerService loggerService, IItemService itemService)
     {
         _transactionService = transactionService;
         _transactionPayloadService = transactionPayloadService;
         _paymentRepository = paymentRepository;
         _itemRepository = itemRepository;
         _loggerService = loggerService;
+        _itemService = itemService;
     }
 
     public async Task Process(Canonical canonical)
@@ -61,7 +63,7 @@ public class OrderService : IOrderService
                 await _loggerService.Save(new Log(canonical.id, $"Transaction add items process start"));
 
                 var setItems = GetCanonicalItems(canonical);
-                await _itemRepository.BatchAdd(setItems);
+                await _itemService.AddList(setItems);
 
                 await _loggerService.Save(new Log(canonical.id, $"Transaction add items process end"));
 
@@ -77,7 +79,7 @@ public class OrderService : IOrderService
                 await _transactionService.SetBatched(transactionId, 1);
 
                 await _loggerService.Save(new Log(canonical.id, $"Transaction processed sucessfully end p"));
-                
+
                 return;
             }
 
@@ -151,7 +153,7 @@ public class OrderService : IOrderService
 
         if (newItems.Any())
         {
-            await _itemRepository.BatchAdd(newItems);
+            await _itemService.AddList(newItems);
         }
 
         var toBeDeleted = incomeItems.Except(currentItems, comparer).ToList();
@@ -189,23 +191,23 @@ public class OrderService : IOrderService
     private async Task ProcessUpdateTransaction(Transactions transaction, Canonical canonical)
     {
         await _loggerService.Save(new Log(canonical.id, $"Transaction update processing start"));
-        
+
         await _transactionService.SetBatched(transaction.TDMTransactionID, 0);
-        
+
         await _loggerService.Save(new Log(canonical.id, $"Transaction update items process start"));
 
         await ProcessUpdateItems(transaction.Items, GetCanonicalItems(canonical));
-        
+
         await _loggerService.Save(new Log(canonical.id, $"Transaction update items process end"));
-        
+
         await _loggerService.Save(new Log(canonical.id, $"Transaction update payment process start"));
 
         await ProcessUpdatePayment(canonical.tlog.tenders, canonical.tlog.totals, canonical.id);
-        
+
         await _loggerService.Save(new Log(canonical.id, $"Transaction update payment process end"));
 
         await _transactionService.SetBatched(transaction.TDMTransactionID, 1);
-        
+
         await _loggerService.Save(new Log(canonical.id, $"Transaction update processing end"));
     }
 

@@ -20,6 +20,8 @@ CREATE TABLE [TDM_Transaction](
     TransactionType NVARCHAR(100)  NULL,
     CreatedDate DATETIME DEFAULT GETDATE() NOT NULL,
     Batched INT DEFAULT 0 NOT NULL,
+    TotalDiscount DECIMAL(24,6) NULL,
+    ToRemove BIT DEFAULT 0 NOT NULL,
     CONSTRAINT PK_TDM_Transaction_TDMTransactionID PRIMARY KEY (TDMTransactionID)
 )
 CREATE TABLE [TDM_Transaction_Payload]
@@ -58,5 +60,21 @@ CREATE TABLE [TDM_Logging](
     TDMLogID INT NOT NULL PRIMARY KEY IDENTITY,
     Raw VARCHAR(MAX) NULL,
     DateStamp DATETIME NULL,
+    TDMTransactionID NVARCHAR(150) NULL,
+)
+CREATE TABLE [TDM_Discount](
+    TDMDiscountId INT NOT NULL PRIMARY KEY IDENTITY,
+    [Name] VARCHAR(150) NULL,
+    Amount DECIMAL(24,6) NULL,
+    [Type] VARCHAR(150) NULL,
     TDMTransactionID NVARCHAR(150) NULL FOREIGN KEY REFERENCES [TDM_Transaction] (TDMTransactionID),
+)
+CREATE TABLE [TDM_Item_Taxes](
+    TDMItemTaxesId INT NOT NULL PRIMARY KEY IDENTITY,
+    [Name] VARCHAR(150) NULL,
+    ExternalId INT NULL,
+    [Type] VARCHAR(150) NULL,
+    TaxableAmount DECIMAL(24,6) NULL,
+    Amount DECIMAL(24,6) NULL,
+    ItemId INT NOT NULL FOREIGN KEY REFERENCES [TDM_Item] (ItemID),
 )

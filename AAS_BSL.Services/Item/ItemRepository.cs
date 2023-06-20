@@ -13,13 +13,15 @@ public class ItemRepository : IItemRepository
         _dbContext = dbContext;
     }
 
-    public async Task Add(Domain.Entyties.Item.Item item)
+    public async Task<int> Add(Domain.Entyties.Item.Item item)
     {
         using var connection = _dbContext.CreateConnection();
-        await connection.ExecuteAsync("INSERT INTO TDM_Item VALUES (@Discount, @UnitPrice, " +
-                                      "@Quantity, @Measurement, @ProductId, @ProductName, " +
-                                      "@ProductPrice, @ParentItemId, @TDMTransactionID)",
+        var id = await connection.QuerySingleAsync<int>("INSERT INTO TDM_Item VALUES (@Discount, @UnitPrice, " +
+                                                        "@Quantity, @Measurement, @ProductId, @ProductName, " +
+                                                        "@ProductPrice, @ParentItemId, @TDMTransactionID) " +
+                                                        "SELECT CAST(SCOPE_IDENTITY() as int)",
             item);
+        return id;
     }
 
     public async Task BatchAdd(IEnumerable<Domain.Entyties.Item.Item> items)

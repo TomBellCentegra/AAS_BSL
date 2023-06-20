@@ -15,4 +15,6 @@ public class Item
     public double ProductPrice { get; set; }
     public int ParentItemId { get; set; }
     public string TDMTransactionID { get; set; }
+
+    public virtual IList<Tax.Tax> Taxes { get; set; }
 }
