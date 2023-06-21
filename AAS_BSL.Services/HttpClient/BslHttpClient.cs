@@ -65,6 +65,11 @@ public class BslHttpClient : IBslHttpClient
 
     public async Task<StatusResult> GetTransactionLog(string transactionLogId)
     {
+        if (string.IsNullOrEmpty(transactionLogId))
+        {
+            return new StatusResult { Status = Status.Failed, Message = "Transaction log id is null or empty" };
+        }
+
         await _loggerService.Save(new Log(transactionLogId, "Get transaction process start"));
 
         var httpRequestMessage = new HttpRequestMessage
@@ -93,7 +98,7 @@ public class BslHttpClient : IBslHttpClient
 
         await _loggerService.Save(new Log(transactionLogId,
             $"Get transaction process end with response body: {responseBody}"));
-        
+
         return response.IsSuccessStatusCode
             ? new StatusResult { Status = Status.Done, Message = responseBody }
             : new StatusResult { Status = Status.Failed, Message = responseBody };

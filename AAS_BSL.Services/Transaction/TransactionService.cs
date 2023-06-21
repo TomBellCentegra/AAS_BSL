@@ -97,4 +97,14 @@ public class TransactionService : ITransactionService
             }, splitOn: "ItemID", param: new { externalId });
         return transactionMap.Values.FirstOrDefault();
     }
+
+    public async Task SetRemove(string transactionId)
+    {
+        var query =
+            "UPDATE TDM_Transaction SET ToRemove = 1 " +
+            "WHERE TDMTransactionID = @transactionId";
+
+        using var connection = _dbContext.CreateConnection();
+        await connection.ExecuteAsync(query, new { transactionId });
+    }
 }

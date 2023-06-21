@@ -104,6 +104,15 @@ public class OrderService : IOrderService
         }
     }
 
+    public async Task ProcessCancellation(string transactionId)
+    {
+        await _loggerService.Save(new Log(transactionId, "Transaction cancel process start"));
+
+        await _transactionService.SetRemove(transactionId);
+
+        await _loggerService.Save(new Log(transactionId, "Transaction cancel process end"));
+    }
+
     private TransactionDto CreateTransactionEntity(Canonical canonical)
     {
         return new TransactionDto

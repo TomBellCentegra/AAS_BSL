@@ -8,5 +8,6 @@ public interface ITransactionService
     Task<string> Add(TransactionDto transaction);
     Task SetBatched(string transactionId,int batched);
     Task<Transactions> Get(string transactionId);
+    Task SetRemove(string transactionId);
 
 }
