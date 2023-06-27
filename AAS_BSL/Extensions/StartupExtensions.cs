@@ -40,14 +40,14 @@ public static class StartupExtensions
 
         AutoMapperConfig.Init(config);
     }
-    
+
     public static void ConfigureServices(IServiceCollection services, IConfiguration configuration)
     {
         var typeSearcher = new TypeSearcher();
         services.AddSingleton<ITypeSearcher>(typeSearcher);
 
         InitAutoMapper(typeSearcher);
-        
+
         services.AddScoped<ICompanyService, CompanyService>();
         services.AddScoped<ISecretService, SecretService>();
         services.AddScoped<IOrderService, OrderService>();
@@ -59,6 +59,7 @@ public static class StartupExtensions
         services.AddScoped<IItemService, ItemService>();
         services.AddScoped<ITaxRepository, TaxRepository>();
         services.AddScoped<IDiscountRepository, DiscountRepository>();
+        services.AddScoped<ITotalsRepository, TotalsRepository>();
         services.AddScoped<ILoggerService, LoggerService>();
 
         services.AddHttpClient<IBslHttpClient, BslHttpClient>();

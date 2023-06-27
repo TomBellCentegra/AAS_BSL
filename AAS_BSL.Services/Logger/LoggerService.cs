@@ -17,8 +17,8 @@ public class LoggerService : ILoggerService
     {
         using var connection = _dbContext.CreateConnection();
         await connection.ExecuteAsync(
-            "INSERT INTO TDM_Logging (TDMTransactionID, Raw, DateStamp) VALUES ('20230317-572122-10100017', @Raw, @DateStamp)",
-            new { Raw = log.Raw , DateStamp = log.DateStamp});
+            "INSERT INTO TDM_Logging (TDMTransactionID, Raw, DateStamp) VALUES (@Tlogid, @Raw, @DateStamp)",
+            new { Tlogid = log.TDMTransactionID, Raw = log.Raw, DateStamp = log.DateStamp });
     }
 
     public async Task BatchSave(List<Log> logs)

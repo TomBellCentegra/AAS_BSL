@@ -1,4 +1,5 @@
 using AAS_BSL.Domain.Entyties.Item.Tax;
+using AAS_BSL.Domain.Entyties.Payment;
 using AAS_BSL.Domain.Entyties.Transaction.Discount;
 using Item = AAS_BSL.Domain.Entyties.Item.Item;
 
@@ -57,6 +58,25 @@ public static class ExactMappingExtensions
     }
 
     public static Discount ToEntity(this Domain.Canonical.Transaction.Discount model, Discount destination)
+    {
+        return model.MapTo(destination);
+    }
+
+    #endregion
+
+    #region Totals
+
+    public static Domain.Canonical.Transaction.Totals ToModel(this Totals entity)
+    {
+        return entity.MapTo<Totals, Domain.Canonical.Transaction.Totals>();
+    }
+
+    public static Totals ToEntity(this Domain.Canonical.Transaction.Totals model)
+    {
+        return model.MapTo<Domain.Canonical.Transaction.Totals, Totals>();
+    }
+
+    public static Totals ToEntity(this Domain.Canonical.Transaction.Totals model, Totals destination)
     {
         return model.MapTo(destination);
     }

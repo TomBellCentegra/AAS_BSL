@@ -11,6 +11,7 @@ using AAS_BSL.Services.Transaction;
 using AAS_BSL.Services.Transaction.Discount;
 using AAS_BSL.Services.TransactionPayload;
 using Newtonsoft.Json;
+using Totals = AAS_BSL.Domain.Entyties.Payment.Totals;
 
 namespace AAS_BSL.Services.Order;
 
@@ -23,6 +24,7 @@ public class OrderService : IOrderService
     private readonly ILoggerService _loggerService;
     private readonly IItemService _itemService;
     private readonly IDiscountRepository _discountRepository;
+    private readonly ITotalsRepository _totalsRepository;
 
     public OrderService(
         ITransactionService transactionService,
@@ -31,7 +33,8 @@ public class OrderService : IOrderService
         IItemRepository itemRepository,
         ILoggerService loggerService,
         IItemService itemService,
-        IDiscountRepository discountRepository)
+        IDiscountRepository discountRepository,
+        ITotalsRepository totalsRepository)
     {
         _transactionService = transactionService;
         _transactionPayloadService = transactionPayloadService;
@@ -40,6 +43,7 @@ public class OrderService : IOrderService
         _loggerService = loggerService;
         _itemService = itemService;
         _discountRepository = discountRepository;
+        _totalsRepository = totalsRepository;
     }
 
     public async Task Process(Canonical canonical)
@@ -82,10 +86,17 @@ public class OrderService : IOrderService
 
                 await _loggerService.Save(new Log(canonical.id, $"Transaction add payment process start"));
 
-                var payment = createPayment(canonical.tlog.tenders, canonical.tlog.totals);
-                payment.TDMTransactionID = transactionId;
+                var payments = createPayment(canonical.tlog.tenders, transactionId);
 
-                await _paymentRepository.Add(payment);
+                foreach (var payment in payments)
+                {
+                    await _paymentRepository.Add(payment);
+                }
+
+                var totals = canonical.tlog.totals.ToEntity();
+                totals.TDMTransactionID = transactionId;
+
+                await _totalsRepository.Add(totals);
 
                 await _loggerService.Save(new Log(canonical.id, $"Transaction add payment process end"));
 
@@ -138,32 +149,28 @@ public class OrderService : IOrderService
         };
     }
 
-    private Domain.Entyties.Payment.Payment createPayment(IEnumerable<Tender> tenders, Totals totals)
+    private IEnumerable<Domain.Entyties.Payment.Payment> createPayment(IEnumerable<Tender> tenders,
+        string transactionId)
     {
         if (!tenders.Any())
         {
-            return null;
+            return Enumerable.Empty<Domain.Entyties.Payment.Payment>();
         }
 
-        var tendersList = tenders.ToList();
-
-        var paymentTenders = tendersList.Where(x => x.usage.Equals("PAYMENT", StringComparison.OrdinalIgnoreCase));
-        var changeTenders = tendersList.Where(x => x.usage.Equals("CHANGE", StringComparison.OrdinalIgnoreCase));
-
-        return new Domain.Entyties.Payment.Payment
+        var paymentList = new List<Domain.Entyties.Payment.Payment>();
+        foreach (var tender in tenders)
         {
-            ExternalPaymentID = tendersList.First().id,
-            Type = tendersList.First().type,
-            Amount = paymentTenders.Sum(x => x.tenderAmount.amount),
-            Change = changeTenders.Sum(x => x.tenderAmount.amount),
-            Currency = tendersList.First().currency.code,
-            GrandAmount = totals.grandAmount?.amount ?? 0,
-            NetAmount = totals.netAmount?.amount ?? 0,
-            GrossAmount = totals.grossAmount?.amount ?? 0,
-            VoidsAmount = totals.voidsAmount?.amount ?? 0,
-            DiscountAmount = totals.discountAmount?.amount ?? 0,
-            TaxExclusive = totals.taxExclusive?.amount ?? 0
-        };
+            paymentList.Add(new Domain.Entyties.Payment.Payment()
+            {
+                Amount = tender.tenderAmount.amount,
+                Type = tender.type,
+                Currency = tender.currency.code,
+                ExternalPaymentID = tender.id,
+                TDMTransactionID = transactionId
+            });
+        }
+
+        return paymentList;
     }
 
     private async Task ProcessUpdateItems(IEnumerable<Domain.Entyties.Item.Item> incomeItems,
@@ -200,15 +207,23 @@ public class OrderService : IOrderService
         }
     }
 
-    private async Task ProcessUpdatePayment(IEnumerable<Tender> tenders, Totals totals, string transactionId)
+    private async Task ProcessUpdatePayment(IEnumerable<Tender> tenders, string transactionId)
     {
         await _paymentRepository.Delete(transactionId);
 
-        var payment = createPayment(tenders, totals);
+        var payments = createPayment(tenders, transactionId);
 
-        payment.TDMTransactionID = transactionId;
+        foreach (var payment in payments)
+        {
+            await _paymentRepository.Add(payment);
+        }
+    }
 
-        await _paymentRepository.Add(payment);
+    private async Task ProcessUpdateTotals(Totals totals)
+    {
+        await _totalsRepository.Delete(totals.TDMTransactionID);
+
+        await _totalsRepository.Add(totals);
     }
 
     private async Task ProcessUpdateTransaction(Transactions transaction, Canonical canonical)
@@ -225,7 +240,12 @@ public class OrderService : IOrderService
 
         await _loggerService.Save(new Log(canonical.id, $"Transaction update payment process start"));
 
-        await ProcessUpdatePayment(canonical.tlog.tenders, canonical.tlog.totals, canonical.id);
+        await ProcessUpdatePayment(canonical.tlog.tenders, canonical.id);
+
+        var totals = canonical.tlog.totals.ToEntity();
+        totals.TDMTransactionID = canonical.id;
+
+        await ProcessUpdateTotals(totals);
 
         await _loggerService.Save(new Log(canonical.id, $"Transaction update payment process end"));
 

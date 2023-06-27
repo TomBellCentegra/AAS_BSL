@@ -47,7 +47,10 @@ CREATE TABLE [TDM_Payment](
     [Type] VARCHAR(100) NULL,
     Amount DECIMAL(24,6) NOT NULL,
     Currency VARCHAR(50) NOT NULL,
-    Change DECIMAL(24,6)  NULL,
+    TDMTransactionID NVARCHAR(150) NOT NULL FOREIGN KEY REFERENCES [TDM_Transaction] (TDMTransactionID),
+)
+CREATE TABLE [TDM_Totals](
+    TotalsID INT NOT NULL PRIMARY KEY IDENTITY,
     GrandAmount DECIMAL(24,6)  NULL,
     NetAmount DECIMAL(24,6)  NULL,
     GrossAmount DECIMAL(24,6)  NULL,
@@ -56,6 +59,7 @@ CREATE TABLE [TDM_Payment](
     TaxExclusive DECIMAL(24,6)  NULL,
     TDMTransactionID NVARCHAR(150) NOT NULL FOREIGN KEY REFERENCES [TDM_Transaction] (TDMTransactionID),
 )
+
 CREATE TABLE [TDM_Logging](
     TDMLogID INT NOT NULL PRIMARY KEY IDENTITY,
     Raw VARCHAR(MAX) NULL,

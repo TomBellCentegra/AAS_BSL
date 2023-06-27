@@ -17,11 +17,8 @@ public class PaymentRepository : IPaymentRepository
     {
         var sql =
             "INSERT INTO TDM_Payment (ExternalPaymentID,Type,TDMTransactionID,Amount," +
-            "Currency,Change,GrandAmount,NetAmount,GrossAmount,VoidsAmount," +
-            "DiscountAmount,TaxExclusive) VALUES " +
-            "(@ExternalPaymentID,@Type,@TDMTransactionID,@Amount,@Currency,@Change," +
-            "@GrandAmount,@NetAmount,@GrossAmount,@VoidsAmount," +
-            "@DiscountAmount,@TaxExclusive)";
+            "Currency) VALUES " +
+            "(@ExternalPaymentID,@Type,@TDMTransactionID,@Amount,@Currency)";
 
         var parameters = new DynamicParameters();
         parameters.Add("ExternalPaymentID", payment.ExternalPaymentID, DbType.Int32, ParameterDirection.Input);
@@ -29,13 +26,6 @@ public class PaymentRepository : IPaymentRepository
         parameters.Add("TDMTransactionID", payment.TDMTransactionID, DbType.String, ParameterDirection.Input);
         parameters.Add("Amount", payment.Amount, DbType.Decimal, ParameterDirection.Input);
         parameters.Add("Currency", payment.Currency, DbType.String, ParameterDirection.Input);
-        parameters.Add("Change", payment.Change, DbType.Decimal, ParameterDirection.Input);
-        parameters.Add("GrandAmount", payment.GrandAmount, DbType.Decimal, ParameterDirection.Input);
-        parameters.Add("NetAmount", payment.NetAmount, DbType.Decimal, ParameterDirection.Input);
-        parameters.Add("GrossAmount", payment.GrossAmount, DbType.Decimal, ParameterDirection.Input);
-        parameters.Add("VoidsAmount", payment.VoidsAmount, DbType.Decimal, ParameterDirection.Input);
-        parameters.Add("DiscountAmount", payment.DiscountAmount, DbType.Decimal, ParameterDirection.Input);
-        parameters.Add("TaxExclusive", payment.TaxExclusive, DbType.Decimal, ParameterDirection.Input);
 
         using var connection = _dbContext.CreateConnection();
         var resultId = await connection.ExecuteAsync(sql,
