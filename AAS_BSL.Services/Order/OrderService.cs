@@ -2,15 +2,20 @@ using AAS_BSL.Domain.Canonical;
 using AAS_BSL.Domain.Canonical.Transaction;
 using AAS_BSL.Domain.Dtos.Transaction;
 using AAS_BSL.Domain.Entyties.Transaction;
+using AAS_BSL.Domain.Entyties.Transaction.Emploee;
 using AAS_BSL.Domain.Logger;
 using AAS_BSL.Infrastructure.Mapper;
 using AAS_BSL.Services.Item;
 using AAS_BSL.Services.Logger;
 using AAS_BSL.Services.Payment;
 using AAS_BSL.Services.Transaction;
+using AAS_BSL.Services.Transaction.Customer;
 using AAS_BSL.Services.Transaction.Discount;
+using AAS_BSL.Services.Transaction.Employee;
+using AAS_BSL.Services.Transaction.Order;
 using AAS_BSL.Services.TransactionPayload;
 using Newtonsoft.Json;
+using Customer = AAS_BSL.Domain.Entyties.Transaction.Customer.Customer;
 using Totals = AAS_BSL.Domain.Entyties.Payment.Totals;
 
 namespace AAS_BSL.Services.Order;
@@ -25,6 +30,9 @@ public class OrderService : IOrderService
     private readonly IItemService _itemService;
     private readonly IDiscountRepository _discountRepository;
     private readonly ITotalsRepository _totalsRepository;
+    private readonly ICustomerRepository _customerRepository;
+    private readonly IEmployeeRepository _employeeRepository;
+    private readonly IOrderRepository _orderRepository;
 
     public OrderService(
         ITransactionService transactionService,
@@ -34,7 +42,10 @@ public class OrderService : IOrderService
         ILoggerService loggerService,
         IItemService itemService,
         IDiscountRepository discountRepository,
-        ITotalsRepository totalsRepository)
+        ITotalsRepository totalsRepository,
+        ICustomerRepository customerRepository,
+        IOrderRepository orderRepository,
+        IEmployeeRepository employeeRepository)
     {
         _transactionService = transactionService;
         _transactionPayloadService = transactionPayloadService;
@@ -44,6 +55,9 @@ public class OrderService : IOrderService
         _itemService = itemService;
         _discountRepository = discountRepository;
         _totalsRepository = totalsRepository;
+        _customerRepository = customerRepository;
+        _orderRepository = orderRepository;
+        _employeeRepository = employeeRepository;
     }
 
     public async Task Process(Canonical canonical)
@@ -97,6 +111,38 @@ public class OrderService : IOrderService
                 totals.TDMTransactionID = transactionId;
 
                 await _totalsRepository.Add(totals);
+
+                if (canonical.tlog.customer is not null)
+                {
+                    var customer = canonical.tlog.customer.ToEntity();
+                    customer.TDMTransactionID = transactionId;
+
+                    await _customerRepository.Add(customer);
+                }
+
+                var employees = canonical.tlog.employees.Select(x => x.ToEntity());
+                var resEmployees = employees.Select(x =>
+                {
+                    x.TDMTransactionID = canonical.id;
+                    return x;
+                });
+
+                await _employeeRepository.BatchAdd(resEmployees);
+
+                if (canonical.tlog.orders is not null)
+                {
+                    var order = canonical.tlog.orders.Select(x => x.ToEntity());
+                    var resOrder = order.Select(x =>
+                    {
+                        x.TDMTransactionID = canonical.id;
+                        return x;
+                    });
+
+                    foreach (var itemOrder in resOrder)
+                    {
+                        await _orderRepository.Add(itemOrder);
+                    }
+                }
 
                 await _loggerService.Save(new Log(canonical.id, $"Transaction add payment process end"));
 
@@ -226,6 +272,31 @@ public class OrderService : IOrderService
         await _totalsRepository.Add(totals);
     }
 
+    private async Task ProcessUpdateCustomer(Customer customer)
+    {
+        await _customerRepository.Delete(customer.TDMTransactionID);
+
+        await _customerRepository.Add(customer);
+    }
+
+    private async Task ProcessUpdateEmployees(IEnumerable<Employee> employees, string transactionId)
+    {
+        await _employeeRepository.Delete(transactionId);
+
+        await _employeeRepository.BatchAdd(employees);
+    }
+
+    private async Task ProcessUpdateOrders(IEnumerable<Domain.Entyties.Transaction.Order.Order> orders,
+        string transactionId)
+    {
+        await _orderRepository.Delete(transactionId);
+
+        foreach (var order in orders)
+        {
+            await _orderRepository.Add(order);
+        }
+    }
+
     private async Task ProcessUpdateTransaction(Transactions transaction, Canonical canonical)
     {
         await _loggerService.Save(new Log(canonical.id, $"Transaction update processing start"));
@@ -242,10 +313,56 @@ public class OrderService : IOrderService
 
         await ProcessUpdatePayment(canonical.tlog.tenders, canonical.id);
 
+        await _loggerService.Save(new Log(canonical.id, $"Transaction update totals process start"));
+
         var totals = canonical.tlog.totals.ToEntity();
         totals.TDMTransactionID = canonical.id;
 
         await ProcessUpdateTotals(totals);
+
+        await _loggerService.Save(new Log(canonical.id, $"Transaction update totals process end"));
+
+        if (canonical.tlog.customer is not null)
+        {
+            await _loggerService.Save(new Log(canonical.id, $"Transaction update customer process start"));
+
+            var customer = canonical.tlog.customer.ToEntity();
+            customer.TDMTransactionID = canonical.id;
+
+            await ProcessUpdateCustomer(customer);
+
+            await _loggerService.Save(new Log(canonical.id, $"Transaction update customer process end"));
+        }
+
+        await _loggerService.Save(new Log(canonical.id, $"Transaction update employee process start"));
+
+        var employees = canonical.tlog.employees.Select(x => x.ToEntity());
+        var resEmployees = employees.Select(x =>
+        {
+            x.TDMTransactionID = canonical.id;
+            return x;
+        });
+
+        await ProcessUpdateEmployees(resEmployees, canonical.id);
+
+        await _loggerService.Save(new Log(canonical.id, $"Transaction update employee process end"));
+
+
+        if (canonical.tlog.orders is not null)
+        {
+            await _loggerService.Save(new Log(canonical.id, $"Transaction update order process start"));
+
+            var order = canonical.tlog.orders.Select(x => x.ToEntity());
+            var resOrder = order.Select(x =>
+            {
+                x.TDMTransactionID = canonical.id;
+                return x;
+            });
+
+            await ProcessUpdateOrders(resOrder, canonical.id);
+
+            await _loggerService.Save(new Log(canonical.id, $"Transaction update order process end"));
+        }
 
         await _loggerService.Save(new Log(canonical.id, $"Transaction update payment process end"));
 
