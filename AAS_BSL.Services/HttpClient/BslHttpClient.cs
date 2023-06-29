@@ -3,7 +3,9 @@ using System.Security.Cryptography;
 using System.Text;
 using AAS_BSL.Domain.Dtos;
 using AAS_BSL.Domain.Enums;
+using AAS_BSL.Domain.Logger;
 using AAS_BSL.Domain.Subscription;
+using AAS_BSL.Services.Logger;
 using Newtonsoft.Json;
 
 namespace AAS_BSL.Services.HttpClient;
@@ -11,10 +13,14 @@ namespace AAS_BSL.Services.HttpClient;
 public class BslHttpClient : IBslHttpClient
 {
     private readonly System.Net.Http.HttpClient _httpClient;
+    private readonly ILoggerService _loggerService;
 
-    public BslHttpClient(System.Net.Http.HttpClient httpClient)
+    public BslHttpClient(
+        System.Net.Http.HttpClient httpClient,
+        ILoggerService loggerService)
     {
         _httpClient = httpClient;
+        _loggerService = loggerService;
     }
 
     public async Task<StatusResult> Subscribe(SubscriptionRequestDto request)
@@ -29,21 +35,15 @@ public class BslHttpClient : IBslHttpClient
         httpRequestMessage.Headers.Add("nep-organization", request.NepOrganization);
         httpRequestMessage.Headers.Host = "api.ncr.com";
 
-
         var subscription = new SubscriptionRequest()
         {
-            //authenticationCredentials = new AuthenticationCredential()
-            //{
-            //    authenticationType = "BASIC",
-            //    credentials = "token"
-            //},
             name = request.CompanyName,
             description = $"Subscription for {request.CompanyName}",
             endpoint = new Endpoint
             {
-                name = "Centegra BSL",
+                name = "CentegraBSL",
                 description = "Centegra BSL integration",
-                destinationUrl = "https://localhost:8080/order"
+                destinationUrl = "https://aasbsl-dev.azurewebsites.net/bsl/subscribe"
             },
             topicId = new TdmTopicIdData
             {
@@ -57,6 +57,47 @@ public class BslHttpClient : IBslHttpClient
 
         var response = await _httpClient.SendAsync(httpRequestMessage);
         var responseBody = await response.Content.ReadAsStringAsync();
+
+        return response.IsSuccessStatusCode
+            ? new StatusResult { Status = Status.Done, Message = responseBody }
+            : new StatusResult { Status = Status.Failed, Message = responseBody };
+    }
+
+    public async Task<StatusResult> GetTransactionLog(string transactionLogId)
+    {
+        if (string.IsNullOrEmpty(transactionLogId))
+        {
+            return new StatusResult { Status = Status.Failed, Message = "Transaction log id is null or empty" };
+        }
+
+        await _loggerService.Save(new Log(transactionLogId, "Get transaction process start"));
+
+        var httpRequestMessage = new HttpRequestMessage
+        {
+            Method = HttpMethod.Get,
+            RequestUri = new Uri($"https://api.ncr.com/transaction-document/transaction-documents/{transactionLogId}")
+        };
+
+        var request = new SubscriptionRequestDto
+        {
+            NepOrganization = "3aa6ae99fa50434692ed481e38b0557d",
+            SecretKey = "db6a3df1b72e4ace9aa6692c5acc2fd5",
+            SharedKey = "2b3f21f652584c12af034e2ec0227a07"
+        };
+
+        var signature = CalculateSignature(httpRequestMessage, request);
+
+        httpRequestMessage.Headers.Authorization = new AuthenticationHeaderValue("AccessKey", signature);
+        httpRequestMessage.Headers.Add("nep-organization", request.NepOrganization);
+        httpRequestMessage.Headers.Host = "api.ncr.com";
+
+
+        var response = await _httpClient.SendAsync(httpRequestMessage);
+
+        var responseBody = await response.Content.ReadAsStringAsync();
+
+        await _loggerService.Save(new Log(transactionLogId,
+            $"Get transaction process end with response body: {responseBody}"));
 
         return response.IsSuccessStatusCode
             ? new StatusResult { Status = Status.Done, Message = responseBody }

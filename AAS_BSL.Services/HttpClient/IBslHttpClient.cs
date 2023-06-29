@@ -5,5 +5,6 @@ namespace AAS_BSL.Services.HttpClient;
 public interface IBslHttpClient
 {
     Task<StatusResult> Subscribe(SubscriptionRequestDto request);
+    Task<StatusResult> GetTransactionLog(string transactionLogId);
 
 }
