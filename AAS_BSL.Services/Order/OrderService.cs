@@ -90,6 +90,8 @@ public class OrderService : IOrderService
 
                 await _loggerService.Save(new Log(canonical.id, $"Transaction add items process end"));
 
+                await _loggerService.Save(new Log(canonical.id, $"Transaction add discounts process start"));
+
                 var discounts = canonical.tlog.transactionDiscounts.Select(x => x.ToEntity());
                 var resDiscounts = discounts.Select(x =>
                 {
@@ -97,6 +99,8 @@ public class OrderService : IOrderService
                     return x;
                 });
                 await _discountRepository.BatchAdd(resDiscounts);
+
+                await _loggerService.Save(new Log(canonical.id, $"Transaction add discounts process end"));
 
                 await _loggerService.Save(new Log(canonical.id, $"Transaction add payment process start"));
 
@@ -107,18 +111,28 @@ public class OrderService : IOrderService
                     await _paymentRepository.Add(payment);
                 }
 
+                await _loggerService.Save(new Log(canonical.id, $"Transaction add totals process start"));
+
                 var totals = canonical.tlog.totals.ToEntity();
                 totals.TDMTransactionID = transactionId;
 
                 await _totalsRepository.Add(totals);
 
+                await _loggerService.Save(new Log(canonical.id, $"Transaction add totals process end"));
+
                 if (canonical.tlog.customer is not null)
                 {
+                    await _loggerService.Save(new Log(canonical.id, $"Transaction add customer process start"));
+
                     var customer = canonical.tlog.customer.ToEntity();
                     customer.TDMTransactionID = transactionId;
 
                     await _customerRepository.Add(customer);
+
+                    await _loggerService.Save(new Log(canonical.id, $"Transaction add customer process end"));
                 }
+
+                await _loggerService.Save(new Log(canonical.id, $"Transaction add employees process start"));
 
                 var employees = canonical.tlog.employees.Select(x => x.ToEntity());
                 var resEmployees = employees.Select(x =>
@@ -129,8 +143,12 @@ public class OrderService : IOrderService
 
                 await _employeeRepository.BatchAdd(resEmployees);
 
+                await _loggerService.Save(new Log(canonical.id, $"Transaction add employees process end"));
+
                 if (canonical.tlog.orders is not null)
                 {
+                    await _loggerService.Save(new Log(canonical.id, $"Transaction add order process start"));
+
                     var order = canonical.tlog.orders.Select(x => x.ToEntity());
                     var resOrder = order.Select(x =>
                     {
@@ -142,6 +160,8 @@ public class OrderService : IOrderService
                     {
                         await _orderRepository.Add(itemOrder);
                     }
+
+                    await _loggerService.Save(new Log(canonical.id, $"Transaction add order process end"));
                 }
 
                 await _loggerService.Save(new Log(canonical.id, $"Transaction add payment process end"));

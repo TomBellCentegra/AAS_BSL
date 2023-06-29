@@ -1,4 +1,5 @@
 using System.ComponentModel.DataAnnotations.Schema;
+using AAS_BSL.Domain.Entyties.Transaction.Discount;
 
 namespace AAS_BSL.Domain.Entyties.Item;
 
@@ -17,4 +18,5 @@ public class Item
     public string TDMTransactionID { get; set; }
 
     public virtual IList<Tax.Tax> Taxes { get; set; }
+    public virtual IList<Discount> Discounts { get; set; }
 }

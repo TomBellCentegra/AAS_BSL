@@ -26,7 +26,7 @@ public class DiscountRepository : IDiscountRepository
     {
         using var connection = _dbContext.CreateConnection();
         await connection.ExecuteAsync("INSERT INTO TDM_Discount VALUES (@Name, @Amount, " +
-                                      "@Type, @TDMTransactionID)",
+                                      "@Type, @TDMTransactionID, @TDMItemID)",
             discounts);
     }
 }
