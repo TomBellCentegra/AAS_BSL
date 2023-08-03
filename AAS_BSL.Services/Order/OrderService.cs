@@ -211,7 +211,9 @@ public class OrderService : IOrderService
             ReceiptId = canonical.tlog.receiptId,
             TransactionType = canonical.tlog.transactionType,
             CreatedDate = DateTime.Now,
-            TotalDiscount = canonical.tlog.totals.discountAmount?.amount ?? 0
+            TotalDiscount = canonical.tlog.totals.discountAmount?.amount ?? 0,
+            TouchPointId = canonical.touchPointId,
+            TransactionNumber = canonical.transactionNumber
         };
     }
 

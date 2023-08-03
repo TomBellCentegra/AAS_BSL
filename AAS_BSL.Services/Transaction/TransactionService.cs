@@ -21,11 +21,11 @@ public class TransactionService : ITransactionService
             "INSERT INTO TDM_Transaction (TDMTransactionID,BusinessDay,CloseDate,OpenDate," +
             "IsTraining,SiteInfoId,SiteInfoName,SiteInfoTimeZone,EmployeeName,Employees," +
             "EmployeeShiftId,IsDeleted,IsOpen,IsVoided,LocalCurrency,Location,LocationId," +
-            "ReceiptId,TransactionType, TotalDiscount) VALUES " +
+            "ReceiptId,TransactionType, TotalDiscount, TouchPointId, TransactionNumber) VALUES " +
             "(@TDMTransactionID,@BusinessDay,@CloseDate,@OpenDate,@IsTraining,@SiteInfoId," +
             "@SiteInfoName,@SiteInfoTimeZone,@EmployeeName,@Employees," +
             "@EmployeeShiftId,@IsDeleted,@IsOpen,@IsVoided,@LocalCurrency," +
-            "@Location,@LocationId,@ReceiptId,@TransactionType, @TotalDiscount)";
+            "@Location,@LocationId,@ReceiptId,@TransactionType, @TotalDiscount, @TouchPointId, @TransactionNumber)";
 
         var parameters = new DynamicParameters();
         parameters.Add("TDMTransactionID", transaction.TransactionID, DbType.String, ParameterDirection.Input);
@@ -48,6 +48,8 @@ public class TransactionService : ITransactionService
         parameters.Add("ReceiptId", transaction.ReceiptId, DbType.String, ParameterDirection.Input);
         parameters.Add("TransactionType", transaction.TransactionType, DbType.String, ParameterDirection.Input);
         parameters.Add("TotalDiscount", transaction.TotalDiscount, DbType.Decimal, ParameterDirection.Input);
+        parameters.Add("TouchPointId", transaction.TouchPointId, DbType.String, ParameterDirection.Input);
+        parameters.Add("TransactionNumber", transaction.TransactionNumber, DbType.String, ParameterDirection.Input);
 
         using var connection = _dbContext.CreateConnection();
         var resultId = await connection.ExecuteAsync(sql,

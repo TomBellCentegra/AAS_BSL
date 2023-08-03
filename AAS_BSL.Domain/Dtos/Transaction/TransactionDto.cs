@@ -23,4 +23,6 @@ public class TransactionDto
     public string TransactionType { get; set; }
     public DateTime CreatedDate { get; set; }
     public double TotalDiscount { get; set; }
+    public string TransactionNumber { get; set; }
+    public string TouchPointId { get; set; }
 }

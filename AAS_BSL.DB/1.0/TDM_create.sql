@@ -22,6 +22,8 @@ CREATE TABLE [TDM_Transaction](
     Batched INT DEFAULT 0 NOT NULL,
     TotalDiscount DECIMAL(24,6) NULL,
     ToRemove BIT DEFAULT 0 NOT NULL,
+    TouchPointId VARCHAR(100) NULL,
+    TransactionNumber VARCHAR(150) NULL,
     CONSTRAINT PK_TDM_Transaction_TDMTransactionID PRIMARY KEY (TDMTransactionID)
 )
 CREATE TABLE [TDM_Transaction_Payload]
